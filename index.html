@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Portfolio Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid #e2e8f0; }
+        .table-container { scrollbar-width: thin; }
+        th { white-space: nowrap; transition: all 0.2s; }
+        th:hover { background-color: rgba(241, 245, 249, 1); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen p-4 md:p-10">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
+            <div>
+                <h1 class="text-4xl font-black tracking-tight text-slate-800 flex items-center gap-3">
+                    <i data-lucide="trending-up" class="text-indigo-600"></i>
+                    B3 <span class="text-indigo-600">Dashboard</span>
+                </h1>
+                <p class="text-slate-500 mt-1">Fundamental analysis & Portfolio rebalancing</p>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="text-right border-r pr-4 border-slate-200">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Portfolio</p>
+                    <h2 id="summary-total" class="text-2xl font-mono font-bold text-slate-800">R$ 0,00</h2>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="PortfolioApp.updateToken()" class="p-2 hover:bg-slate-200 rounded-full transition" title="Update API Token">
+                        <i data-lucide="key" class="w-5 h-5 text-slate-500"></i>
+                    </button>
+                    <button onclick="PortfolioApp.refresh()" class="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="glass rounded-3xl shadow-2xl overflow-hidden border border-white/40">
+            <div class="overflow-x-auto table-container">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-100/80">
+                        <tr class="text-slate-600 text-sm uppercase tracking-wider">
+                            <th class="p-5 font-bold">#</th>
+                            <th class="p-5 font-bold">Ticker</th>
+                            <th class="p-5 font-bold text-center">Units</th>
+                            <th class="p-5 font-bold text-center">Price</th>
+                            <th class="p-5 font-bold text-indigo-600 text-center cursor-pointer" onclick="PortfolioApp.handleSort('total')">
+                                Total Invested <span id="icon-total">⇅</span>
+                            </th>
+                            <th class="p-5 font-bold text-center cursor-pointer" onclick="PortfolioApp.handleSort('p_l')">
+                                P/L <span id="icon-p_l">⇅</span>
+                            </th>
+                            <th class="p-5 font-bold text-center cursor-pointer" onclick="PortfolioApp.handleSort('lpa')">
+                                LPA <span id="icon-lpa">⇅</span>
+                            </th>
+                            <th class="p-5 font-bold text-center cursor-pointer" onclick="PortfolioApp.handleSort('p_vpa')">
+                                P/VPA <span id="icon-p_vpa">⇅</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-table-body" class="divide-y divide-slate-100 bg-white/50">
+                        </tbody>
+                    <tfoot class="bg-slate-50 font-bold border-t-2 border-slate-200">
+                        <tr>
+                            <td colspan="2" class="p-5 text-slate-500" id="footer-count">Tickers: 0</td>
+                            <td colspan="2"></td>
+                            <td class="p-5 text-center text-indigo-700 text-lg font-mono" id="footer-total">R$ 0,00</td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </main>
+        
+        <div id="empty-state" class="hidden p-20 text-center">
+            <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+            <p class="text-slate-500">Could not load portfolio data.</p>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * PORTFOLIO APPLICATION MODULE
+         */
+        const PortfolioApp = (() => {
+            // --- Private State ---
+            const MY_PORTFOLIO = {
+                'TIMS3': 130,
+                'MULT3': 101,
+                'RADL3': 133,
+                'BBDC3': 202,
+                'ODPV3': 337,
+                'CPFE3': 80,
+                'EGIE3': 120,
+                'WEGE3': 82,
+                'FLRY3': 266,
+                'BBAS3': 190,
+                'ITUB3': 108,
+                'PRIO3': 123,
+                'TOTS3': 127,
+                'SAPR3': 500,
+                'PSSA3': 135
+            };
+
+            const STATE = {
+                stocks: [],
+                sortBy: 'total',
+                sortDir: 'asc'
+            };
+
+            // --- Utilities ---
+            const formatCurrency = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const formatNum = (val, decimals = 2) => val.toFixed(decimals);
+
+            // --- Core Logic ---
+            const getToken = () => {
+                let token = localStorage.getItem('brapi_token');
+                if (!token) {
+                    token = prompt("Enter your Brapi.dev API Token:");
+                    if (token) localStorage.setItem('brapi_token', token);
+                }
+                return token;
+            };
+
+            const fetchStocks = async () => {
+                const token = getToken();
+                if (!token) return;
+
+                const tickers = Object.keys(MY_PORTFOLIO).join(',');
+                const url = `https://brapi.dev/api/quote/${tickers}?token=${token}&fundamental=true&modules=balanceSheetHistory,defaultKeyStatistics`;
+
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    if (!data.results) throw new Error("Invalid API Response");
+
+                    console.log(data);
+
+                    STATE.stocks = data.results.map(s => ({
+                        ticker: s.symbol,
+                        price: s.regularMarketPrice || 0,
+                        units: MY_PORTFOLIO[s.symbol] || 0,
+                        total: (s.regularMarketPrice || 0) * (MY_PORTFOLIO[s.symbol] || 0),
+                        p_l: s.priceEarnings || 0,
+                        lpa: s.earningsPerShare || 0,
+                        p_vpa: s.defaultKeyStatistics?.priceToBook || 0
+                    }));
+
+                    render();
+                } catch (err) {
+                    console.error("Fetch Error:", err);
+                    document.getElementById('empty-state').classList.remove('hidden');
+                }
+            };
+
+            const render = () => {
+                const tbody = document.getElementById('stock-table-body');
+                
+                // Sort Logic
+                const sortedData = [...STATE.stocks].sort((a, b) => {
+                    const mod = STATE.sortDir === 'asc' ? 1 : -1;
+                    return (a[STATE.sortBy] - b[STATE.sortBy]) * mod;
+                });
+
+                // Generate Rows
+                tbody.innerHTML = sortedData.map((stock, idx) => {
+                    const { ticker, units, price, total, p_l, lpa, p_vpa } = stock;
+                    return `
+                        <tr class="hover:bg-indigo-50/40 transition-colors group">
+                            <td class="p-5 text-slate-400 font-mono text-xs">${idx + 1}</td>
+                            <td class="p-5 font-bold text-slate-800">${ticker}</td>
+                            <td class="p-5 text-center text-slate-600">${units}</td>
+                            <td class="p-5 text-center text-slate-600 font-mono text-sm">${formatCurrency(price)}</td>
+                            <td class="p-5 text-center font-bold text-indigo-600 font-mono">${formatCurrency(total)}</td>
+                            <td class="p-5 text-center text-slate-500 font-mono">${formatNum(p_l)}</td>
+                            <td class="p-5 text-center text-slate-500 font-mono">${formatNum(lpa)}</td>
+                            <td class="p-5 text-center text-slate-500 font-mono">${formatNum(p_vpa)}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Update Footers/Headers
+                const grandTotal = STATE.stocks.reduce((acc, s) => acc + s.total, 0);
+                const totalStr = formatCurrency(grandTotal);
+
+                document.getElementById('summary-total').innerText = totalStr;
+                document.getElementById('footer-total').innerText = totalStr;
+                document.getElementById('footer-count').innerText = `Tickers: ${STATE.stocks.length}`;
+                
+                lucide.createIcons();
+            };
+
+            // --- Public API ---
+            return {
+                init: () => {
+                    fetchStocks();
+                    lucide.createIcons();
+                },
+                refresh: fetchStocks,
+                updateToken: () => {
+                    const newToken = prompt("Enter new Brapi.dev Token:");
+                    if (newToken) {
+                        localStorage.setItem('brapi_token', newToken);
+                        fetchStocks();
+                    }
+                },
+                handleSort: (col) => {
+                    if (STATE.sortBy === col) {
+                        STATE.sortDir = STATE.sortDir === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        STATE.sortBy = col;
+                        STATE.sortDir = 'asc';
+                    }
+                    render();
+                }
+            };
+        })();
+
+        // Bootstrap App
+        PortfolioApp.init();
+    </script>
+</body>
+</html>
