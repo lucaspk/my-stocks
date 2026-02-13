@@ -1,0 +1,18 @@
+.glass { 
+    background: rgba(255, 255, 255, 0.8); 
+    backdrop-filter: blur(12px); 
+    border: 1px solid #e2e8f0; 
+}
+
+.table-container { 
+    scrollbar-width: thin; 
+}
+
+th { 
+    white-space: nowrap; 
+    transition: all 0.2s; 
+}
+
+th:hover { 
+    background-color: rgba(241, 245, 249, 1); 
+}
