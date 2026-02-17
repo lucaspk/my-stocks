@@ -3,44 +3,7 @@
  * Uses Brapi.dev for Brazil and Finnhub for US market data.
  */
 const PortfolioApp = (() => {
-    const MARKET = {
-        BRAZIL: 'brazil',
-        US: 'us'
-    };
-
-    const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-    const PORTFOLIOS = {
-        [MARKET.BRAZIL]: {
-            'TIMS3': 130,
-            'MULT3': 101,
-            'RADL3': 133,
-            'BBDC3': 202,
-            'ODPV3': 337,
-            'CPFE3': 80,
-            'EGIE3': 120,
-            'WEGE3': 82,
-            'FLRY3': 266,
-            'BBAS3': 190,
-            'ITUB3': 108,
-            'PRIO3': 123,
-            'TOTS3': 127,
-            'SAPR3': 500,
-            'PSSA3': 135
-        },
-        [MARKET.US]: {
-            'PAYX': 2,
-            'ROL': 4,
-            'FAST': 10,
-            'ROST': 3,
-            'JPM': 2,
-            'GOOG': 0,
-            'JNJ': 3,
-            'AME': 3,
-            'MSFT': 4,
-            'TSM': 4
-        }
-    };
+    const { MARKET, PORTFOLIOS, API_CONFIG, RATE_LIMIT_DELAY_MS } = window.PortfolioConstants;
 
     const STATE = {
         currentMarket: MARKET.BRAZIL,
@@ -48,29 +11,6 @@ const PortfolioApp = (() => {
         sortBy: 'total',
         sortDir: 'asc'
     };
-
-    const API_CONFIG = {
-        [MARKET.BRAZIL]: {
-            baseUrl: 'https://brapi.dev/api/quote',
-            storageKey: 'brapi_token',
-            tokenPrompt: 'Enter your Brapi.dev API Token:',
-            updateTokenPrompt: 'Enter new Brapi.dev Token:',
-            cacheKey: 'brapi_stocks_cache',
-            cacheTTL: CACHE_TTL_MS
-        },
-        [MARKET.US]: {
-            baseUrl: 'https://finnhub.io/api/v1',
-            storageKey: 'finnhub_token',
-            tokenPrompt: 'Enter your Finnhub API Token:',
-            updateTokenPrompt: 'Enter new Finnhub API Token:',
-            cacheKey: 'finnhub_stocks_cache',
-            cacheTTL: CACHE_TTL_MS
-        }
-    };
-
-    // -------------------------------------------------------------------------
-    // Formatting & DOM helpers
-    // -------------------------------------------------------------------------
 
     const formatCurrency = (val, market) => {
         const currency = market === MARKET.BRAZIL ? 'BRL' : 'USD';
@@ -128,10 +68,6 @@ const PortfolioApp = (() => {
         }
     };
 
-    // -------------------------------------------------------------------------
-    // API URL builders
-    // -------------------------------------------------------------------------
-
     const buildBrazilApiUrl = (tickers, token) => {
         const { baseUrl } = API_CONFIG[MARKET.BRAZIL];
         return `${baseUrl}/${tickers}?token=${token}&fundamental=true&modules=balanceSheetHistory,defaultKeyStatistics`;
@@ -144,10 +80,6 @@ const PortfolioApp = (() => {
             : `symbol=${symbol}&token=${token}${additionalParams}`;
         return `${baseUrl}/${endpoint}?${params}`;
     };
-
-    // -------------------------------------------------------------------------
-    // Data transformation
-    // -------------------------------------------------------------------------
 
     const transformBrazilStockData = (apiStock) => {
         const portfolio = PORTFOLIOS[MARKET.BRAZIL];
@@ -190,20 +122,12 @@ const PortfolioApp = (() => {
         };
     };
 
-    // -------------------------------------------------------------------------
-    // Sorting
-    // -------------------------------------------------------------------------
-
     const sortStocks = (stocks) => {
         const multiplier = STATE.sortDir === 'asc' ? 1 : -1;
         return [...stocks].sort((a, b) =>
             (Number(a[STATE.sortBy]) - Number(b[STATE.sortBy])) * multiplier
         );
     };
-
-    // -------------------------------------------------------------------------
-    // Rendering
-    // -------------------------------------------------------------------------
 
     const createStockRow = (stock, index) => {
         const { ticker, units, price, total, p_l, lpa, p_vpa } = stock;
@@ -250,10 +174,6 @@ const PortfolioApp = (() => {
     const hideError = () => {
         getElement('empty-state').classList.add('hidden');
     };
-
-    // -------------------------------------------------------------------------
-    // Tab styling
-    // -------------------------------------------------------------------------
 
     const TAB_ACTIVE_CLASSES = 'border-indigo-600 text-indigo-600';
     const TAB_INACTIVE_CLASSES = 'border-transparent text-slate-500';
@@ -339,8 +259,6 @@ const PortfolioApp = (() => {
             return;
         }
 
-        const RATE_LIMIT_DELAY_MS = 1100; // Finnhub free tier: 60 calls/min
-
         try {
             const results = [];
 
@@ -398,10 +316,6 @@ const PortfolioApp = (() => {
         }
     };
 
-    // -------------------------------------------------------------------------
-    // Sort & Token handlers
-    // -------------------------------------------------------------------------
-
     const handleSort = (column) => {
         if (STATE.sortBy === column) {
             STATE.sortDir = STATE.sortDir === 'asc' ? 'desc' : 'asc';
@@ -420,10 +334,6 @@ const PortfolioApp = (() => {
             fetchStocks();
         }
     };
-
-    // -------------------------------------------------------------------------
-    // Market switch
-    // -------------------------------------------------------------------------
 
     const switchMarket = (market) => {
         STATE.currentMarket = market;
@@ -455,6 +365,8 @@ const PortfolioApp = (() => {
         switchMarket
     };
 })();
+
+window.PortfolioApp = PortfolioApp;
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => PortfolioApp.init());
