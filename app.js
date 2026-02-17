@@ -43,30 +43,7 @@ const PortfolioApp = (() => {
     };
 
 
-    const getCache = (config) => {
-        const cached = localStorage.getItem(config.cacheKey);
-        if (!cached) return null;
-
-        try {
-            const { timestamp, data } = JSON.parse(cached);
-            const age = Date.now() - timestamp;
-            return age < config.cacheTTL ? data : null;
-        } catch (err) {
-            console.error('Error reading cache:', err);
-            return null;
-        }
-    };
-
-    const setCache = (config, data) => {
-        try {
-            localStorage.setItem(config.cacheKey, JSON.stringify({
-                timestamp: Date.now(),
-                data
-            }));
-        } catch (err) {
-            console.error('Error saving cache:', err);
-        }
-    };
+    const { getCache, setCache } = window.Cache;
 
     const buildBrazilApiUrl = (tickers, token) => {
         const { baseUrl } = API_CONFIG[MARKET.BRAZIL];
@@ -198,10 +175,6 @@ const PortfolioApp = (() => {
         usTab.classList.toggle('text-slate-500', !usActive);
         usTab.setAttribute('aria-selected', String(usActive));
     };
-
-    // -------------------------------------------------------------------------
-    // API fetchers
-    // -------------------------------------------------------------------------
 
     const fetchBrazilStocks = async () => {
         const config = API_CONFIG[MARKET.BRAZIL];
