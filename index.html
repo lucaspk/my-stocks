@@ -26,48 +26,40 @@
                     <h2 id="summary-total" class="text-2xl font-mono font-bold text-slate-800">R$ 0,00</h2>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="PortfolioApp.updateToken()" class="p-2 hover:bg-slate-200 rounded-full transition" title="Update API Token">
-                        <i data-lucide="key" class="w-5 h-5 text-slate-500"></i>
+                    <button type="button" onclick="PortfolioApp.updateToken()" class="p-2 hover:bg-slate-200 rounded-full transition" title="Update API Token" aria-label="Update API Token">
+                        <i data-lucide="key" class="w-5 h-5 text-slate-500" aria-hidden="true"></i>
                     </button>
-                    <button onclick="PortfolioApp.refresh()" class="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">
-                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                    <button type="button" onclick="PortfolioApp.refresh()" class="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-100" aria-label="Refresh portfolio data">
+                        <i data-lucide="refresh-cw" class="w-5 h-5" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
         </header>
 
-        <div class="mb-6 flex gap-2 border-b border-slate-200">
-            <button id="tab-brazil" onclick="PortfolioApp.switchMarket('brazil')" class="px-6 py-3 font-semibold text-sm border-b-2 border-indigo-600 text-indigo-600 transition-colors">
-                <i data-lucide="globe" class="w-4 h-4 inline mr-2"></i>
+        <nav class="mb-6 flex gap-2 border-b border-slate-200" role="tablist" aria-label="Market selection">
+            <button type="button" id="tab-brazil" onclick="PortfolioApp.switchMarket('brazil')" class="px-6 py-3 font-semibold text-sm border-b-2 border-indigo-600 text-indigo-600 transition-colors" role="tab" aria-selected="true" aria-controls="stock-table-body">
+                <i data-lucide="globe" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
                 Brazilian Stocks (B3)
             </button>
-            <button id="tab-us" onclick="PortfolioApp.switchMarket('us')" class="px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors">
-                <i data-lucide="flag" class="w-4 h-4 inline mr-2"></i>
+            <button type="button" id="tab-us" onclick="PortfolioApp.switchMarket('us')" class="px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors" role="tab" aria-selected="false" aria-controls="stock-table-body">
+                <i data-lucide="flag" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
                 US Stocks
             </button>
-        </div>
+        </nav>
 
         <main class="glass rounded-3xl shadow-2xl overflow-hidden border border-white/40">
             <div class="overflow-x-auto table-container">
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-100/80">
                         <tr class="text-slate-600 text-sm uppercase tracking-wider">
-                            <th class="p-5 font-bold">#</th>
-                            <th class="p-5 font-bold">Ticker</th>
-                            <th class="p-5 font-bold text-center">Units</th>
-                            <th class="p-5 font-bold text-center">Price</th>
-                            <th class="p-5 font-bold text-indigo-600 text-center cursor-pointer" onclick="PortfolioApp.handleSort('total')">
-                                Total Invested <span id="icon-total">⇅</span>
-                            </th>
-                            <th class="p-5 font-bold text-center cursor-pointer" onclick="PortfolioApp.handleSort('p_l')">
-                                P/L <span id="icon-p_l">⇅</span>
-                            </th>
-                            <th class="p-5 font-bold text-center cursor-pointer" onclick="PortfolioApp.handleSort('lpa')">
-                                LPA <span id="icon-lpa">⇅</span>
-                            </th>
-                            <th class="p-5 font-bold text-center cursor-pointer" onclick="PortfolioApp.handleSort('p_vpa')">
-                                P/VPA <span id="icon-p_vpa">⇅</span>
-                            </th>
+                            <th scope="col" class="p-5 font-bold">#</th>
+                            <th scope="col" class="p-5 font-bold">Ticker</th>
+                            <th scope="col" class="p-5 font-bold text-center">Units</th>
+                            <th scope="col" class="p-5 font-bold text-center">Price</th>
+                            <th scope="col" class="p-5 font-bold text-indigo-600 text-center cursor-pointer" onclick="PortfolioApp.handleSort('total')">Total Invested <span id="icon-total">⇅</span></th>
+                            <th scope="col" class="p-5 font-bold text-center cursor-pointer" onclick="PortfolioApp.handleSort('p_l')">P/L <span id="icon-p_l">⇅</span></th>
+                            <th scope="col" class="p-5 font-bold text-center cursor-pointer" onclick="PortfolioApp.handleSort('lpa')">LPA <span id="icon-lpa">⇅</span></th>
+                            <th scope="col" class="p-5 font-bold text-center cursor-pointer" onclick="PortfolioApp.handleSort('p_vpa')">P/VPA <span id="icon-p_vpa">⇅</span></th>
                         </tr>
                     </thead>
                     <tbody id="stock-table-body" class="divide-y divide-slate-100 bg-white/50">
@@ -84,8 +76,8 @@
             </div>
         </main>
         
-        <div id="empty-state" class="hidden p-20 text-center">
-            <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+        <div id="empty-state" class="hidden p-20 text-center" role="alert" aria-live="polite">
+            <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-slate-300 mb-4" aria-hidden="true"></i>
             <p class="text-slate-500">Could not load portfolio data.</p>
         </div>
     </div>

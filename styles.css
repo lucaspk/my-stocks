@@ -1,18 +1,27 @@
-.glass { 
-    background: rgba(255, 255, 255, 0.8); 
-    backdrop-filter: blur(12px); 
-    border: 1px solid #e2e8f0; 
+/* Smart Portfolio Tracker - Custom styles */
+
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: #e2e8f0;
+    --th-hover-bg: rgba(241, 245, 249, 1);
+    --transition-duration: 0.2s;
 }
 
-.table-container { 
-    scrollbar-width: thin; 
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
 }
 
-th { 
-    white-space: nowrap; 
-    transition: all 0.2s; 
+.table-container {
+    scrollbar-width: thin;
 }
 
-th:hover { 
-    background-color: rgba(241, 245, 249, 1); 
+th {
+    white-space: nowrap;
+    transition: background-color var(--transition-duration) ease;
+}
+
+th:hover {
+    background-color: var(--th-hover-bg);
 }
